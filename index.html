@@ -18,7 +18,7 @@
   <body>
     <header class="app-header">
       <div>
-        <p class="eyebrow">Toptracer Range専用</p>
+        <p class="eyebrow">Version 1.2 / Toptracer Range専用</p>
         <h1>Golf Log</h1>
       </div>
       <button class="icon-button" id="installButton" type="button" hidden aria-label="ホーム画面に追加">+</button>
@@ -27,15 +27,41 @@
     <main>
       <section class="panel active" id="scanPanel" aria-labelledby="scanTitle">
         <div class="section-head">
-          <h2 id="scanTitle">スクショ読み取り</h2>
+          <h2 id="scanTitle">記録</h2>
           <button class="ghost-button" id="manualButton" type="button">手入力</button>
         </div>
 
+        <div class="session-card">
+          <div>
+            <span>現在の練習セッション</span>
+            <strong id="currentSessionName">今日の練習</strong>
+            <p id="currentSessionMemo">メモなし</p>
+          </div>
+          <button class="ghost-button" id="newSessionButton" type="button">変更</button>
+        </div>
+
+        <div class="session-editor" id="sessionEditor" hidden>
+          <label>日付<input id="sessionDateInput" type="date"></label>
+          <label>セッション名<input id="sessionNameInput" type="text" placeholder="例: 6/30 夜練習"></label>
+          <label>練習テーマ<select id="sessionThemeInput"></select></label>
+          <label>練習メモ<textarea id="sessionMemoInput" rows="3" placeholder="今日のテーマ、調子、気づき"></textarea></label>
+          <label>次回の課題<textarea id="sessionNextTaskInput" rows="2" placeholder="今日のまとめに表示します"></textarea></label>
+          <button class="primary-button" id="saveSessionButton" type="button">セッション保存</button>
+        </div>
+
         <label class="upload-box" for="screenshotInput">
-          <span>Toptracerのスクリーンショットを選択</span>
-          <small>OCR後に必ず確認・修正できます</small>
+          <span>スクショからOCR</span>
+          <small>失敗しても次の画面で手修正できます</small>
         </label>
         <input id="screenshotInput" type="file" accept="image/*">
+
+        <div class="manual-callout">
+          <div>
+            <strong>OCRなしでもすぐ記録</strong>
+            <span>練習場ではクラブと距離だけ先に入れて保存できます。</span>
+          </div>
+          <button class="primary-button" id="manualEntryButton" type="button">手入力で記録</button>
+        </div>
 
         <div class="preview-wrap" id="previewWrap" hidden>
           <img id="previewImage" alt="アップロードしたスクリーンショット">
@@ -57,17 +83,24 @@
           <h2 id="confirmTitle">確認・修正</h2>
           <button class="ghost-button" id="clearFormButton" type="button">クリア</button>
         </div>
+        <p class="form-mode" id="formModeText">OCR結果を確認して、違うところを直してください。</p>
         <form id="shotForm" class="shot-form">
           <label>日付<input name="date" type="date" required></label>
-          <label>クラブ<input name="club" type="text" list="clubList" placeholder="7I / Driver など" required></label>
+          <label>クラブ<select name="club" id="clubSelect" required></select></label>
           <label>キャリー yd<input name="carry" type="number" inputmode="decimal" step="0.1" min="0"></label>
           <label>トータル yd<input name="total" type="number" inputmode="decimal" step="0.1" min="0"></label>
           <label>ボール初速 mph<input name="ballSpeed" type="number" inputmode="decimal" step="0.1" min="0"></label>
           <label>打ち出し角 °<input name="launchAngle" type="number" inputmode="decimal" step="0.1"></label>
           <label>左右ブレ yd<input name="side" type="number" inputmode="decimal" step="0.1"></label>
-          <label class="wide">メモ<input name="memo" type="text" placeholder="練習場、感触、ミス傾向など"></label>
-          <datalist id="clubList"></datalist>
-          <button class="primary-button wide" type="submit">保存する</button>
+          <input name="rating" type="hidden" value="normal">
+          <div class="rating-group wide" aria-label="ショット評価">
+            <button type="button" data-rating="good">🟢 ナイス</button>
+            <button type="button" data-rating="normal" class="active">🟡 普通</button>
+            <button type="button" data-rating="miss">🔴 ミス</button>
+          </div>
+          <label class="wide">ショットメモ<input name="memo" type="text" placeholder="当たり、ミス、風など"></label>
+          <div class="target-hint wide" id="targetHint">目標: -</div>
+          <button class="primary-button wide" type="submit">このセッションに保存</button>
         </form>
         <p class="notice" id="saveNotice" role="status"></p>
       </section>
@@ -75,21 +108,38 @@
       <section class="panel" id="historyPanel" aria-labelledby="historyTitle">
         <div class="section-head">
           <h2 id="historyTitle">履歴</h2>
-          <button class="ghost-button" id="sampleButton" type="button">サンプル</button>
+          <div class="history-actions">
+            <button class="ghost-button" id="sampleButton" type="button">サンプル追加</button>
+            <button class="danger-button" id="deleteSamplesButton" type="button">サンプル削除</button>
+          </div>
         </div>
         <div class="toolbar">
+          <select id="dataModeFilter" aria-label="データ種別">
+            <option value="real">本番データ</option>
+            <option value="sample">サンプルデータ</option>
+          </select>
+          <select id="sessionFilter" aria-label="セッションで絞り込み"></select>
           <select id="clubFilter" aria-label="クラブで絞り込み"></select>
           <button class="ghost-button" id="exportButton" type="button">CSV</button>
         </div>
         <div class="stats">
-          <div><span>平均トータル</span><strong id="avgTotal">-</strong></div>
-          <div><span>最高トータル</span><strong id="maxTotal">-</strong></div>
-          <div><span>平均キャリー</span><strong id="avgCarry">-</strong></div>
+          <div><span>10球平均</span><strong id="avgTotal">-</strong></div>
+          <div><span>最高</span><strong id="maxTotal">-</strong></div>
+          <div><span>最低</span><strong id="minTotal">-</strong></div>
         </div>
         <div class="chart-shell">
           <canvas id="growthChart" height="260"></canvas>
         </div>
         <div class="history-list" id="historyList"></div>
+        <button class="primary-button wide finish-button" id="finishSessionButton" type="button">今日のまとめを見る</button>
+      </section>
+
+      <section class="panel" id="summaryPanel" aria-labelledby="summaryTitle">
+        <div class="section-head">
+          <h2 id="summaryTitle">今日のまとめ</h2>
+          <button class="ghost-button" type="button" data-target="historyPanel">履歴へ</button>
+        </div>
+        <div class="summary-content" id="summaryContent"></div>
       </section>
 
       <section class="panel" id="settingsPanel" aria-labelledby="settingsTitle">
@@ -98,13 +148,28 @@
           Apps Script Web App URL
           <input id="gasUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec">
         </label>
+        <div class="setting-head">
+          <h3>クラブ別 目標飛距離</h3>
+          <button class="ghost-button" id="saveTargetsButton" type="button">目標を保存</button>
+        </div>
+        <div class="target-grid" id="targetGrid"></div>
+        <div class="setting-head">
+          <h3>スイングチェックリスト</h3>
+          <select id="checklistTheme" aria-label="チェックリスト種別"></select>
+        </div>
+        <div class="checklist-list" id="checklistList"></div>
+        <label class="wide setting-label">
+          チェック内容を編集
+          <textarea id="checklistText" rows="6" placeholder="1行に1つずつ入力"></textarea>
+        </label>
+        <button class="ghost-button" id="saveChecklistButton" type="button">チェックリスト保存</button>
         <button class="primary-button" id="saveSettingsButton" type="button">設定を保存</button>
-        <p class="notice">URL未設定でも端末内に保存されます。Googleスプレッドシート連携後は同じデータをApps Scriptへ送信します。</p>
+        <p class="notice">URL未設定でも本番データは端末内に保存されます。サンプルデータは本番データと別に保存され、Googleスプレッドシートへ送信しません。</p>
       </section>
     </main>
 
     <nav class="tabbar" aria-label="メイン">
-      <button class="tab active" data-target="scanPanel" type="button">読取</button>
+      <button class="tab active" data-target="scanPanel" type="button">記録</button>
       <button class="tab" data-target="confirmPanel" type="button">修正</button>
       <button class="tab" data-target="historyPanel" type="button">履歴</button>
       <button class="tab" data-target="settingsPanel" type="button">設定</button>

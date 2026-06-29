@@ -1,4 +1,4 @@
-const CACHE_NAME = "toptracer-golf-log-v1";
+const CACHE_NAME = "toptracer-golf-log-v12";
 const APP_ASSETS = [
   "./",
   "index.html",
