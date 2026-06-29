@@ -1,0 +1,18 @@
+{
+  "name": "Toptracer Golf Log",
+  "short_name": "Golf Log",
+  "description": "Toptracer RangeのスクリーンショットをOCRして、飛距離の成長を記録するWebアプリです。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f4",
+  "theme_color": "#0b6b58",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

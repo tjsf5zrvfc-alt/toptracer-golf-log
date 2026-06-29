@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Toptracer Golf Log">
+  <rect width="512" height="512" rx="96" fill="#0b6b58"/>
+  <circle cx="358" cy="132" r="44" fill="#f6f2df"/>
+  <path d="M94 360c88-106 180-156 324-190" fill="none" stroke="#f6f2df" stroke-width="28" stroke-linecap="round"/>
+  <path d="M118 388h276" stroke="#d99b2b" stroke-width="32" stroke-linecap="round"/>
+  <path d="M162 314l46 74M238 268l54 120M318 222l68 166" stroke="#ffffff" stroke-width="18" stroke-linecap="round" opacity=".9"/>
+</svg>

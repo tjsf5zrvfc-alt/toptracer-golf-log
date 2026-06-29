@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0b6b58">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Toptracer Log">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Toptracer Golf Log</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Toptracer Range専用</p>
+        <h1>Golf Log</h1>
+      </div>
+      <button class="icon-button" id="installButton" type="button" hidden aria-label="ホーム画面に追加">+</button>
+    </header>
+
+    <main>
+      <section class="panel active" id="scanPanel" aria-labelledby="scanTitle">
+        <div class="section-head">
+          <h2 id="scanTitle">スクショ読み取り</h2>
+          <button class="ghost-button" id="manualButton" type="button">手入力</button>
+        </div>
+
+        <label class="upload-box" for="screenshotInput">
+          <span>Toptracerのスクリーンショットを選択</span>
+          <small>OCR後に必ず確認・修正できます</small>
+        </label>
+        <input id="screenshotInput" type="file" accept="image/*">
+
+        <div class="preview-wrap" id="previewWrap" hidden>
+          <img id="previewImage" alt="アップロードしたスクリーンショット">
+        </div>
+
+        <div class="progress" id="ocrProgress" hidden>
+          <div class="progress-bar"><span id="progressFill"></span></div>
+          <p id="progressText">OCR準備中...</p>
+        </div>
+
+        <details class="ocr-text" id="ocrTextWrap" hidden>
+          <summary>読み取ったテキストを確認</summary>
+          <pre id="ocrText"></pre>
+        </details>
+      </section>
+
+      <section class="panel" id="confirmPanel" aria-labelledby="confirmTitle">
+        <div class="section-head">
+          <h2 id="confirmTitle">確認・修正</h2>
+          <button class="ghost-button" id="clearFormButton" type="button">クリア</button>
+        </div>
+        <form id="shotForm" class="shot-form">
+          <label>日付<input name="date" type="date" required></label>
+          <label>クラブ<input name="club" type="text" list="clubList" placeholder="7I / Driver など" required></label>
+          <label>キャリー yd<input name="carry" type="number" inputmode="decimal" step="0.1" min="0"></label>
+          <label>トータル yd<input name="total" type="number" inputmode="decimal" step="0.1" min="0"></label>
+          <label>ボール初速 mph<input name="ballSpeed" type="number" inputmode="decimal" step="0.1" min="0"></label>
+          <label>打ち出し角 °<input name="launchAngle" type="number" inputmode="decimal" step="0.1"></label>
+          <label>左右ブレ yd<input name="side" type="number" inputmode="decimal" step="0.1"></label>
+          <label class="wide">メモ<input name="memo" type="text" placeholder="練習場、感触、ミス傾向など"></label>
+          <datalist id="clubList"></datalist>
+          <button class="primary-button wide" type="submit">保存する</button>
+        </form>
+        <p class="notice" id="saveNotice" role="status"></p>
+      </section>
+
+      <section class="panel" id="historyPanel" aria-labelledby="historyTitle">
+        <div class="section-head">
+          <h2 id="historyTitle">履歴</h2>
+          <button class="ghost-button" id="sampleButton" type="button">サンプル</button>
+        </div>
+        <div class="toolbar">
+          <select id="clubFilter" aria-label="クラブで絞り込み"></select>
+          <button class="ghost-button" id="exportButton" type="button">CSV</button>
+        </div>
+        <div class="stats">
+          <div><span>平均トータル</span><strong id="avgTotal">-</strong></div>
+          <div><span>最高トータル</span><strong id="maxTotal">-</strong></div>
+          <div><span>平均キャリー</span><strong id="avgCarry">-</strong></div>
+        </div>
+        <div class="chart-shell">
+          <canvas id="growthChart" height="260"></canvas>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <section class="panel" id="settingsPanel" aria-labelledby="settingsTitle">
+        <h2 id="settingsTitle">設定</h2>
+        <label class="wide setting-label">
+          Apps Script Web App URL
+          <input id="gasUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec">
+        </label>
+        <button class="primary-button" id="saveSettingsButton" type="button">設定を保存</button>
+        <p class="notice">URL未設定でも端末内に保存されます。Googleスプレッドシート連携後は同じデータをApps Scriptへ送信します。</p>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="メイン">
+      <button class="tab active" data-target="scanPanel" type="button">読取</button>
+      <button class="tab" data-target="confirmPanel" type="button">修正</button>
+      <button class="tab" data-target="historyPanel" type="button">履歴</button>
+      <button class="tab" data-target="settingsPanel" type="button">設定</button>
+    </nav>
+  </body>
+</html>
