@@ -117,6 +117,11 @@ const els = {
   targetHint: document.querySelector("#targetHint"),
   smartGolfToken: document.querySelector("#smartGolfToken"),
   smartGolfClubMap: document.querySelector("#smartGolfClubMap"),
+  smartGolfJsonText: document.querySelector("#smartGolfJsonText"),
+  smartGolfJsonFile: document.querySelector("#smartGolfJsonFile"),
+  previewSmartGolfJsonButton: document.querySelector("#previewSmartGolfJsonButton"),
+  importSmartGolfJsonButton: document.querySelector("#importSmartGolfJsonButton"),
+  smartGolfJsonPreview: document.querySelector("#smartGolfJsonPreview"),
   smartSyncButton: document.querySelector("#smartSyncButton"),
   smartSyncStatus: document.querySelector("#smartSyncStatus"),
   installButton: document.querySelector("#installButton"),
@@ -142,6 +147,7 @@ const els = {
 let chart;
 let deferredInstallPrompt;
 let currentFormSource = "manual";
+let pendingSmartGolfJson = null;
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -570,6 +576,61 @@ function isDuplicateShot(existing, incoming) {
   });
 }
 
+function smartGolfImportPreview(items) {
+  const first = items[0] || {};
+  const clubMap = loadSmartGolfClubMap();
+  const representativeClub = clubMap[String(first.clubType)] || first.clubType || "-";
+  return `
+    <h3>取り込み確認</h3>
+    <p>件数: ${items.length}件</p>
+    <p>代表データ: ${escapeHtml(representativeClub)} / Carry ${escapeHtml(first.carryDist ?? "-")} / Ball ${escapeHtml(first.ballSpeed ?? "-")} / ${escapeHtml(first.swingDate ?? "-")}</p>
+  `;
+}
+
+function parseSmartGolfJsonText(text) {
+  const parsed = JSON.parse(text);
+  if (!Array.isArray(parsed)) throw new Error("JSON_ARRAY_REQUIRED");
+  return parsed;
+}
+
+function previewSmartGolfJson() {
+  try {
+    const items = parseSmartGolfJsonText(els.smartGolfJsonText.value);
+    pendingSmartGolfJson = items;
+    els.smartGolfJsonPreview.hidden = false;
+    els.smartGolfJsonPreview.innerHTML = smartGolfImportPreview(items);
+    els.importSmartGolfJsonButton.disabled = items.length === 0;
+    els.smartSyncStatus.textContent = items.length ? "JSONを確認しました。取り込みできます。" : "JSON配列が空です。";
+  } catch (error) {
+    pendingSmartGolfJson = null;
+    els.importSmartGolfJsonButton.disabled = true;
+    els.smartGolfJsonPreview.hidden = false;
+    els.smartGolfJsonPreview.innerHTML = "<p>JSON配列を読み込めませんでした。</p>";
+    els.smartSyncStatus.textContent = error.message === "JSON_ARRAY_REQUIRED" ? "JSON配列を貼り付けてください。" : "JSONを確認できませんでした。";
+  }
+}
+
+async function loadSmartGolfJsonFile(file) {
+  if (!file) return;
+  const text = await file.text();
+  els.smartGolfJsonText.value = text;
+  previewSmartGolfJson();
+}
+
+function importSmartGolfItems(items, sourceLabel = "JSON") {
+  const importer = new SmartGolfImporter(loadSmartGolfClubMap());
+  const existing = loadShots("real");
+  const imported = items.map((item) => importer.normalize(item));
+  const unique = imported.filter((shot) => !isDuplicateShot(existing, shot));
+  saveShots([...existing, ...unique], "real");
+  els.dataModeFilter.value = "real";
+  els.sourceFilter.value = "smartgolf";
+  els.smartSyncStatus.textContent = `SMART GOLF ${sourceLabel}取り込み完了: ${unique.length}件追加 / ${imported.length - unique.length}件重複`;
+  renderHistory();
+  showPanel("historyPanel");
+  return { importedCount: imported.length, addedCount: unique.length };
+}
+
 async function syncSmartGolf() {
   const settings = loadSettings();
   const token = String(settings.smartGolfToken || "").trim();
@@ -592,16 +653,7 @@ async function syncSmartGolf() {
     const json = await response.json();
     if (!Array.isArray(json)) throw new Error("SYNC_FAILED");
 
-    const importer = new SmartGolfImporter(loadSmartGolfClubMap());
-    const existing = loadShots("real");
-    const imported = json.map((item) => importer.normalize(item));
-    const unique = imported.filter((shot) => !isDuplicateShot(existing, shot));
-    saveShots([...existing, ...unique], "real");
-    els.dataModeFilter.value = "real";
-    els.sourceFilter.value = "smartgolf";
-    els.smartSyncStatus.textContent = `SMART GOLF同期完了: ${unique.length}件追加 / ${imported.length - unique.length}件重複`;
-    renderHistory();
-    showPanel("historyPanel");
+    importSmartGolfItems(json, "API");
   } catch (error) {
     console.error(error);
     if (error.message === "TOKEN_EXPIRED") {
@@ -950,6 +1002,20 @@ els.saveSmartGolfButton.addEventListener("click", () => {
 });
 
 els.smartSyncButton.addEventListener("click", syncSmartGolf);
+els.previewSmartGolfJsonButton.addEventListener("click", previewSmartGolfJson);
+els.smartGolfJsonFile.addEventListener("change", (event) => {
+  loadSmartGolfJsonFile(event.target.files?.[0]).catch((error) => {
+    console.error(error);
+    els.smartSyncStatus.textContent = "JSONファイルを読み込めませんでした。";
+  });
+});
+els.importSmartGolfJsonButton.addEventListener("click", () => {
+  if (!pendingSmartGolfJson) {
+    previewSmartGolfJson();
+  }
+  if (!pendingSmartGolfJson) return;
+  importSmartGolfItems(pendingSmartGolfJson, "JSON");
+});
 
 els.saveTargetsButton.addEventListener("click", () => {
   const targets = {};

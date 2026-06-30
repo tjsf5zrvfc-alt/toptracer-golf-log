@@ -183,6 +183,19 @@
           <textarea id="smartGolfToken" rows="3" placeholder="portal.sma-gol.appで使われているBearer Token"></textarea>
         </label>
         <label class="wide setting-label">
+          latest_list API response JSON
+          <textarea id="smartGolfJsonText" rows="8" placeholder='[{"clubType":1,"carryDist":220,"ballSpeed":140,"swingDate":"2026-07-05T10:30:00"}]'></textarea>
+        </label>
+        <label class="wide setting-label">
+          JSON / TXTファイル
+          <input id="smartGolfJsonFile" type="file" accept=".json,.txt,application/json,text/plain">
+        </label>
+        <div class="smart-json-actions">
+          <button class="ghost-button" id="previewSmartGolfJsonButton" type="button">JSON確認</button>
+          <button class="primary-button" id="importSmartGolfJsonButton" type="button" disabled>確認したJSONを取り込む</button>
+        </div>
+        <div class="smart-json-preview" id="smartGolfJsonPreview" hidden></div>
+        <label class="wide setting-label">
           clubType変換
           <textarea id="smartGolfClubMap" rows="8" placeholder="1=Driver&#10;2=3W"></textarea>
         </label>

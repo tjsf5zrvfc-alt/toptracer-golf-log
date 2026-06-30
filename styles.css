@@ -433,6 +433,26 @@ textarea {
   margin-bottom: 16px;
 }
 
+.smart-json-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.smart-json-preview {
+  margin-bottom: 14px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+}
+
+.smart-json-preview p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
 .checklist-list {
   display: grid;
   gap: 8px;
@@ -506,7 +526,8 @@ textarea {
   .shot-form,
   .stats,
   .summary-grid,
-  .target-grid {
+  .target-grid,
+  .smart-json-actions {
     grid-template-columns: 1fr;
   }
   .rating-group {
