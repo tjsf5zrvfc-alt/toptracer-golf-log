@@ -31,6 +31,11 @@
           <button class="ghost-button" id="manualButton" type="button">手入力</button>
         </div>
 
+        <div class="source-switch">
+          <span>データソース</span>
+          <strong>TopTracer / SMART GOLF / 手入力</strong>
+        </div>
+
         <div class="session-card">
           <div>
             <span>現在の練習セッション</span>
@@ -63,6 +68,15 @@
           <button class="primary-button" id="manualEntryButton" type="button">手入力で記録</button>
         </div>
 
+        <div class="manual-callout smart-sync">
+          <div>
+            <strong>SMART GOLF同期</strong>
+            <span>保存したBearer Tokenで最新ショットを取り込みます。</span>
+          </div>
+          <button class="primary-button" id="smartSyncButton" type="button">同期</button>
+        </div>
+        <p class="notice" id="smartSyncStatus" role="status"></p>
+
         <div class="preview-wrap" id="previewWrap" hidden>
           <img id="previewImage" alt="アップロードしたスクリーンショット">
         </div>
@@ -89,9 +103,15 @@
           <label>クラブ<select name="club" id="clubSelect" required></select></label>
           <label>キャリー yd<input name="carry" type="number" inputmode="decimal" step="0.1" min="0"></label>
           <label>トータル yd<input name="total" type="number" inputmode="decimal" step="0.1" min="0"></label>
+          <label>ラン yd<input name="run" type="number" inputmode="decimal" step="0.1"></label>
+          <label>HS mph<input name="clubSpeed" type="number" inputmode="decimal" step="0.1"></label>
           <label>ボール初速 mph<input name="ballSpeed" type="number" inputmode="decimal" step="0.1" min="0"></label>
+          <label>ミート率<input name="smashFactor" type="number" inputmode="decimal" step="0.01"></label>
           <label>打ち出し角 °<input name="launchAngle" type="number" inputmode="decimal" step="0.1"></label>
-          <label>左右ブレ yd<input name="side" type="number" inputmode="decimal" step="0.1"></label>
+          <label>左右角 °<input name="sideAngle" type="number" inputmode="decimal" step="0.1"></label>
+          <label>バックスピン<input name="backSpin" type="number" inputmode="decimal" step="1"></label>
+          <label>サイドスピン<input name="sideSpin" type="number" inputmode="decimal" step="1"></label>
+          <label>左右ブレ yd<input name="offline" type="number" inputmode="decimal" step="0.1"></label>
           <input name="rating" type="hidden" value="normal">
           <div class="rating-group wide" aria-label="ショット評価">
             <button type="button" data-rating="good">🟢 ナイス</button>
@@ -117,6 +137,12 @@
           <select id="dataModeFilter" aria-label="データ種別">
             <option value="real">本番データ</option>
             <option value="sample">サンプルデータ</option>
+          </select>
+          <select id="sourceFilter" aria-label="データソース">
+            <option value="">すべて</option>
+            <option value="toptracer">TopTracer</option>
+            <option value="smartgolf">SMART GOLF</option>
+            <option value="manual">手入力</option>
           </select>
           <select id="sessionFilter" aria-label="セッションで絞り込み"></select>
           <select id="clubFilter" aria-label="クラブで絞り込み"></select>
@@ -147,6 +173,18 @@
         <label class="wide setting-label">
           Apps Script Web App URL
           <input id="gasUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec">
+        </label>
+        <div class="setting-head">
+          <h3>SMART GOLF</h3>
+          <button class="ghost-button" id="saveSmartGolfButton" type="button">SMART GOLF設定保存</button>
+        </div>
+        <label class="wide setting-label">
+          Bearer Token
+          <textarea id="smartGolfToken" rows="3" placeholder="portal.sma-gol.appで使われているBearer Token"></textarea>
+        </label>
+        <label class="wide setting-label">
+          clubType変換
+          <textarea id="smartGolfClubMap" rows="8" placeholder="1=Driver&#10;2=3W"></textarea>
         </label>
         <div class="setting-head">
           <h3>クラブ別 目標飛距離</h3>

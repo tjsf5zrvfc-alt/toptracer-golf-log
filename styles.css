@@ -116,7 +116,8 @@ main {
 }
 
 .session-card,
-.manual-callout {
+.manual-callout,
+.source-switch {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
@@ -129,6 +130,7 @@ main {
 }
 
 .session-card span,
+.source-switch span,
 .stats span,
 .summary-grid span {
   display: block;
@@ -137,7 +139,8 @@ main {
   font-weight: 800;
 }
 
-.session-card strong {
+.session-card strong,
+.source-switch strong {
   display: block;
   margin-top: 3px;
   font-size: 18px;
@@ -148,6 +151,14 @@ main {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 14px;
+}
+
+.smart-sync {
+  margin-top: 14px;
+}
+
+.source-switch {
+  grid-template-columns: 1fr;
 }
 
 .session-editor {
@@ -491,6 +502,7 @@ textarea {
   }
   .session-card,
   .manual-callout,
+  .source-switch,
   .shot-form,
   .stats,
   .summary-grid,
