@@ -1,4 +1,4 @@
-const CACHE_NAME = "toptracer-golf-log-v12";
+const CACHE_NAME = "toptracer-golf-log-v13";
 const APP_ASSETS = [
   "./",
   "index.html",
@@ -22,10 +22,24 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const request = event.request;
+  const isNavigation = request.mode === "navigate" || request.destination === "document";
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(request).then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put("index.html", copy));
+        return response;
+      }).catch(() => caches.match("index.html"))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+    caches.match(request).then((cached) => cached || fetch(request).then((response) => {
       const copy = response.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
       return response;
     }).catch(() => caches.match("index.html")))
   );
