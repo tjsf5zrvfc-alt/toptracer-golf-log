@@ -116,6 +116,7 @@ const els = {
   targetGrid: document.querySelector("#targetGrid"),
   targetHint: document.querySelector("#targetHint"),
   smartGolfToken: document.querySelector("#smartGolfToken"),
+  smartGolfCookie: document.querySelector("#smartGolfCookie"),
   smartGolfClubMap: document.querySelector("#smartGolfClubMap"),
   smartGolfJsonText: document.querySelector("#smartGolfJsonText"),
   smartGolfJsonFile: document.querySelector("#smartGolfJsonFile"),
@@ -631,35 +632,62 @@ function importSmartGolfItems(items, sourceLabel = "JSON") {
   return { importedCount: imported.length, addedCount: unique.length };
 }
 
+async function readSmartGolfResponse(response) {
+  if (response.status === 401) throw new Error("TOKEN_EXPIRED");
+  if (response.status === 403) throw new Error("LOGIN_REQUIRED");
+  if (!response.ok) throw new Error("SYNC_FAILED");
+  const json = await response.json();
+  if (!Array.isArray(json)) throw new Error("SYNC_FAILED");
+  return json;
+}
+
+async function fetchSmartGolfWithBearer(token) {
+  const response = await fetch(SMART_GOLF_API_URL, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return readSmartGolfResponse(response);
+}
+
+async function fetchSmartGolfWithCookieSession() {
+  const response = await fetch(SMART_GOLF_API_URL, {
+    method: "GET",
+    credentials: "include"
+  });
+  return readSmartGolfResponse(response);
+}
+
 async function syncSmartGolf() {
   const settings = loadSettings();
   const token = String(settings.smartGolfToken || "").trim();
-  if (!token) {
-    els.smartSyncStatus.textContent = "SMART GOLFのBearer Tokenを設定してください。";
-    showPanel("settingsPanel");
-    return;
-  }
+  const cookie = String(settings.smartGolfCookie || "").trim();
 
-  els.smartSyncStatus.textContent = "SMART GOLFから同期中...";
+  els.smartSyncStatus.textContent = token ? "SMART GOLFから同期中..." : "Cookie認証でSMART GOLF同期中...";
+  let lastError = null;
+
   try {
-    const response = await fetch(SMART_GOLF_API_URL, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (response.status === 401) throw new Error("TOKEN_EXPIRED");
-    if (response.status === 403) throw new Error("LOGIN_REQUIRED");
-    if (!response.ok) throw new Error("SYNC_FAILED");
+    if (token) {
+      try {
+        const json = await fetchSmartGolfWithBearer(token);
+        importSmartGolfItems(json, "API(Bearer)");
+        return;
+      } catch (error) {
+        lastError = error;
+        els.smartSyncStatus.textContent = "Bearer Tokenが使えないためCookie認証を試します...";
+      }
+    }
 
-    const json = await response.json();
-    if (!Array.isArray(json)) throw new Error("SYNC_FAILED");
-
-    importSmartGolfItems(json, "API");
+    const json = await fetchSmartGolfWithCookieSession();
+    importSmartGolfItems(json, "API(Cookie)");
   } catch (error) {
     console.error(error);
+    const finalError = error || lastError;
     if (error.message === "TOKEN_EXPIRED") {
-      els.smartSyncStatus.textContent = "Bearer Tokenが期限切れです。";
+      els.smartSyncStatus.textContent = "Bearer Tokenが期限切れです。Cookie認証も使えませんでした。";
     } else if (error.message === "LOGIN_REQUIRED") {
       els.smartSyncStatus.textContent = "SMART GOLFへログインしてください。";
+    } else if (finalError?.message === "TOKEN_EXPIRED") {
+      els.smartSyncStatus.textContent = "Bearer Tokenが期限切れです。Cookie認証も使えませんでした。";
     } else {
       els.smartSyncStatus.textContent = "同期できませんでした。";
     }
@@ -992,6 +1020,7 @@ els.saveSmartGolfButton.addEventListener("click", () => {
   saveSettings({
     ...loadSettings(),
     smartGolfToken: els.smartGolfToken.value.trim(),
+    smartGolfCookie: els.smartGolfCookie.value.trim(),
     smartGolfClubMap: parseSmartGolfClubMap(els.smartGolfClubMap.value)
   });
   renderClubSelects();
@@ -1057,6 +1086,7 @@ document.querySelector("#versionLabel")?.remove();
 const settings = loadSettings();
 els.gasUrl.value = settings.gasUrl || "";
 els.smartGolfToken.value = settings.smartGolfToken || "";
+els.smartGolfCookie.value = settings.smartGolfCookie || "";
 els.smartGolfClubMap.value = smartGolfClubMapToText(settings.smartGolfClubMap || SMART_GOLF_DEFAULT_CLUB_MAP);
 els.sessionThemeInput.innerHTML = PRACTICE_THEMES.map((theme) => `<option value="${escapeHtml(theme)}">${escapeHtml(theme)}</option>`).join("");
 els.checklistTheme.innerHTML = ["ドライバー", "アイアン"].map((theme) => `<option value="${escapeHtml(theme)}">${escapeHtml(theme)}</option>`).join("");

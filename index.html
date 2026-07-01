@@ -71,7 +71,7 @@
         <div class="manual-callout smart-sync">
           <div>
             <strong>SMART GOLF同期</strong>
-            <span>保存したBearer Tokenで最新ショットを取り込みます。</span>
+            <span>Bearer Tokenまたはログイン済みCookieで最新ショットを取り込みます。</span>
           </div>
           <button class="primary-button" id="smartSyncButton" type="button">同期</button>
         </div>
@@ -182,6 +182,11 @@
           Bearer Token
           <textarea id="smartGolfToken" rows="3" placeholder="portal.sma-gol.appで使われているBearer Token"></textarea>
         </label>
+        <label class="wide setting-label">
+          Cookie
+          <textarea id="smartGolfCookie" rows="4" placeholder="Cookie認証用。通常は同じブラウザでSMART GOLFへログインしてから同期してください。"></textarea>
+        </label>
+        <p class="notice">Bearerが無効な場合はCookieセッション認証を試します。ブラウザ仕様により、貼り付けたCookieを直接Cookieヘッダーとして送ることはできません。</p>
         <label class="wide setting-label">
           latest_list API response JSON
           <textarea id="smartGolfJsonText" rows="8" placeholder='[{"clubType":1,"carryDist":220,"ballSpeed":140,"swingDate":"2026-07-05T10:30:00"}]'></textarea>
